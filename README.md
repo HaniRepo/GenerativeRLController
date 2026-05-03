@@ -154,10 +154,4 @@ This repository supports the submission:
 - Figure reproduction  
 - Ablation studies  
 
-
-## Future Work
-
-- Richer generative models for trajectory synthesis  
-- Multi-agent safety scenarios  
-- Integration with formal verification tools (e.g., Rebeca / Afra)  
-- Sim-to-real validation on embedded systems  
+  
