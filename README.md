@@ -1,42 +1,50 @@
 # GenerativeRLController
 
-This repository contains the proof-of-concept implementation for the IEEE IES Generative AI Challenge 2026 Milestone 2 submission:
+This repository contains the implementation accompanying the IEEE IES Generative AI Challenge 2026 submission:
 
 **Generative Safety Augmentation for Industrial Reinforcement Learning Control Using Conformal Temporal Logic**
 
-The project extends the AeroBench F-16 benchmark with:
-
-* a PPO-based reinforcement learning controller,
-* STL-inspired runtime safety monitoring,
-* conformal prediction for uncertainty-aware safety assessment,
-* a lightweight generative selector for candidate action refinement.
+We extend safe reinforcement learning with a **generative decision layer** that improves safety and tracking performance under uncertainty.
 
 ---
 
-## Repository Structure
+##  Overview
+
+The project builds on the AeroBench F-16 engine benchmark and integrates:
+
+- PPO-based reinforcement learning control
+- STL-inspired runtime safety monitoring
+- Conformal prediction for uncertainty-aware safety
+- **Generative action selection (GENAI)** for safety-aware decision refinement
+
+The key idea is to move from **reactive filtering (conformal shielding)** to **active candidate-based decision making**.
+
+---
+
+##  Repository Structure
 
 ```text
 code/
-├── aerobench/                     # Original AeroBench simulator
-├── f16_engine_env.py              # F-16 engine Gymnasium environment
-├── train_Newppo.py                # PPO training script
-├── run_mini_suite.py              # PPO / STL / conformal benchmark suite
-├── stress_wrappers.py             # Noise, delay, rate limit, setpoint jump wrappers
-├── shield.py                      # Simple STL-style safety shield
-├── conformal_shield.py            # Conformal STL runtime shield
-├── stl_monitor.py                 # STL robustness utilities
+├── aerobench/                      # AeroBench simulator
+├── f16_engine_env.py               # F-16 Gym environment
+├── train_Newppo.py                 # PPO training
+├── stress_wrappers.py              # Noise, delay, actuator limits
+├── conformal_shield.py             # Conformal STL runtime shield
+├── stl_monitor.py                  # STL robustness utilities
 ├── shield_pack/
-│   └── ppo_f16_engine_baseline.zip # Pretrained PPO baseline
+│   └── ppo_f16_engine_baseline.zip # Pretrained PPO model
 └── genai_hackathon/
-    ├── run_genai_suite.py         # Lightweight GenAI proof-of-concept test
-    ├── selector_ablation.py       # Candidate selector ablation study
-    ├── plot_full_rollout_genai.py # Full rollout figure generation
-    └── figures/                   # Generated figures
+    ├── genai_shield.py
+    ├── run_paper_figure_nominal_and_stress.py
+    ├── run_satisfaction_explain_plot.py
+    ├── run_candidate_ablation_hardstress_suite.py
+    ├── run_incremental_stress_sweep.py
+    └── figures/
 ```
-
 ---
 
-## Environment Setup
+  ## Environment Setup
+
 
 Recommended: Python 3.10–3.11 in a clean virtual environment.
 
@@ -72,104 +80,84 @@ Optional (only for AeroBench extras):
 ```bash
 pip install control slycot
 ```
-
 ---
-
-## Quick Start (Recommended for Reviewers)
-
-All commands should be run from inside the `code/` directory.
+## Quick Start (Main Experiments)
+Run all experiments from:
 
 ```bash
 cd code
 ```
-
-### A. Reproduce baseline benchmark suite
-
-This compares:
-
-* PPO baseline
-* PPO + STL shield
-* PPO + conformal shield
-
+🔹 1. Nominal vs Stress Results
 ```bash
-python run_mini_suite.py
+python genai_hackathon/run_paper_figure_nominal_and_stress.py
 ```
-
-Outputs:
-
-* `mini_suite_out/mini_suite.csv`
-* `mini_suite_out/mini_suite.json`
-
----
-
-### B. Run GenAI proof-of-concept selector
-
-This runs the proposed generative action refinement layer.
-
+🔹 2. STL Satisfaction Analysis
 ```bash
-python genai_hackathon/run_genai_suite.py
+python genai_hackathon/run_satisfaction_explain_plot.py
 ```
-
-Outputs:
-
-* STL satisfaction rate
-* mean robustness
-
----
-
-### C. Generate full rollout figure used in the paper
-
+🔹 3. Candidate Ablation (GENAI Study)
 ```bash
-python genai_hackathon/plot_full_rollout_genai.py
+python genai_hackathon/run_candidate_ablation_hardstress_suite.py
 ```
+##  Key Results
 
-Outputs:
+Across stress scenarios:
 
-* `genai_hackathon/figures/full_rollout_genai.png`
+- **PPO** → frequent STL violations  
+- **PPO + Conformal** → improves safety but leaves residual violations  
+- **PPO + GENAI** → achieves full STL satisfaction (**100%**)  
 
-This figure illustrates:
+### GENAI improves:
+- ✅ Safety (STL satisfaction)  
+- ✅ Robustness margins  
+- ✅ Tracking error (RMSE)  
 
-* airspeed tracking,
-* setpoint change adaptation,
-* STL tolerance band,
-* GenAI runtime interventions.
 
----
+##  Method Summary
 
-### D. Run selector ablation study
+At each control step:
 
-```bash
-python genai_hackathon/selector_ablation.py
-```
+1. PPO proposes an action `u_RL`  
+2. GENAI generates candidate actions around it  
+3. Each candidate is evaluated using:
+   - Conformal prediction (uncertainty-aware bounds)  
+   - STL robustness  
+4. The best action is selected based on predicted safety margin  
 
-Outputs:
 
-* selector change frequency,
-* predicted robustness gains,
-* ablation CSV summaries.
+##  Conceptual Shift
 
----
+This framework transforms runtime safety from:
 
-## Notes for Reviewers
+- ❌ Filtering unsafe actions  
+➡️ to  
+- ✅ Optimizing decisions under safety constraints  
 
-* A pretrained PPO controller is already included (`shield_pack/ppo_f16_engine_baseline.zip`), so no training is required.
-* The current implementation is a lightweight proof-of-concept designed for Milestone 2 validation.
-* The GenAI module currently uses local candidate action generation with short-horizon conformal robustness evaluation.
-* Future work will extend this to richer trajectory synthesis models.
 
----
+## 📝 Notes for Reviewers
 
-## Paper and Submission
+- Pretrained PPO model is included → **no training required**  
+- All experiments are **fully reproducible**  
+- GENAI module is **lightweight** (no deep generative model required)  
+- Designed as a **proof-of-concept for real-time safety augmentation**  
 
-This repository accompanies the IEEE IES Generative AI Challenge 2026 submission.
 
-If you are reviewing the manuscript, the repository provides:
+##  Paper Context
 
-* the F-16 benchmark setup,
-* the PPO baseline,
-* runtime conformal safety shield,
-* the proposed GenAI selector proof-of-concept.
+This repository supports the submission:
 
-GitHub repository:
+**"Generative Safety Augmentation for Industrial Reinforcement Learning Control Using Conformal Temporal Logic"**
 
-[https://github.com/HaniRepo/GenerativeRLController](https://github.com/HaniRepo/GenerativeRLController)
+### Includes:
+- Full experimental pipeline  
+- Safety evaluation scripts  
+- Figure reproduction  
+- Ablation studies  
+
+
+## Future Work
+
+- Richer generative models for trajectory synthesis  
+- Multi-agent safety scenarios  
+- Integration with formal verification tools (e.g., Rebeca / Afra)  
+- Sim-to-real validation on embedded systems  
