@@ -1,0 +1,86 @@
+[
+  {
+    "method": "PPO",
+    "seed": 43,
+    "sat": 0.0,
+    "rho": -0.03305067673340909,
+    "rmse": 0.04020139429972659,
+    "mae": 0.028412692862051857,
+    "overshoot": 0.0630506767334091,
+    "recovery_time": 6.0,
+    "mean_u": 0.1782780478025476,
+    "mean_du": 0.08157911151647568,
+    "changed": 0.0
+  },
+  {
+    "method": "PPO+CONF",
+    "seed": 43,
+    "sat": 0.0,
+    "rho": -0.03305067673340909,
+    "rmse": 0.04324663295608287,
+    "mae": 0.031789096556758045,
+    "overshoot": 0.0630506767334091,
+    "recovery_time": 15.3,
+    "mean_u": 0.1609905525902907,
+    "mean_du": 0.01515207859132445,
+    "changed": 253.0
+  },
+  {
+    "method": "PPO+GENAI-9",
+    "seed": 43,
+    "sat": 0.0,
+    "rho": -0.3596970005535072,
+    "rmse": 0.255459682211931,
+    "mae": 0.2373502280341889,
+    "overshoot": 0.3896970005535073,
+    "recovery_time": 40.0,
+    "mean_u": 0.39975,
+    "mean_du": 0.0002504173622704508,
+    "changed": 600.0
+  },
+  {
+    "method": "GENAI-1",
+    "seed": "ablation_mean",
+    "sat": 0.0,
+    "rho": -0.043336232171713916,
+    "rmse": 0.04391179950561145,
+    "changed": 46.8,
+    "candidates": 1
+  },
+  {
+    "method": "GENAI-3",
+    "seed": "ablation_mean",
+    "sat": 0.0,
+    "rho": -0.06253366339424675,
+    "rmse": 0.05007692620970602,
+    "changed": 371.3,
+    "candidates": 3
+  },
+  {
+    "method": "GENAI-5",
+    "seed": "ablation_mean",
+    "sat": 0.0,
+    "rho": -0.04966597880765468,
+    "rmse": 0.04471993455681253,
+    "changed": 182.6,
+    "candidates": 5
+  },
+  {
+    "method": "GENAI-7",
+    "seed": "ablation_mean",
+    "sat": 0.0,
+    "rho": -0.09404080116491476,
+    "rmse": 0.07447818024322976,
+    "changed": 306.4,
+    "candidates": 7
+  },
+  {
+    "method": "GENAI-9",
+    "seed": "ablation_mean",
+    "sat": 0.0,
+    "rho": -0.07982317687471104,
+    "rmse": 0.06633685682575349,
+    "changed": 204.7,
+    "candidates": 9
+  }
+]

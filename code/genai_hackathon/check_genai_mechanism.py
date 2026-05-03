@@ -11,6 +11,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.monitor import Monitor
+from stress_wrappers import SetpointJumpWrapper, NoisyDelayedWrapper
 
 from f16_engine_env import F16EngineEnv
 from conformal_shield import OneStepVTLinear, split_conformal_q, collect_calibration, worst_case_band_violation
@@ -28,10 +29,24 @@ def _base_env(e):
         e = e.env
     return e
 
-
+'''
 def make_env():
     e = Monitor(F16EngineEnv(sp=500.0, dt=0.1, ep_len_s=60.0, seed=SEED))
     e = SetpointJumpWrapper(e, t_jump_s=20.0, sp_new = 530)
+    return e
+'''
+
+def make_env():
+    e = Monitor(F16EngineEnv(sp=500.0, dt=0.1, ep_len_s=60.0, seed=SEED))
+    e = NoisyDelayedWrapper(e, obs_sigma=3.0, act_delay_steps=0)
+
+    b = _base_env(e)
+    if hasattr(b, "sim") and hasattr(b.sim, "cfg") and hasattr(b.sim.cfg, "model_name"):
+        b.sim.cfg.model_name = "morelli"
+    elif hasattr(b, "sim") and hasattr(b.sim, "f16_model"):
+        b.sim.f16_model = "morelli"
+
+    e = SetpointJumpWrapper(e, t_jump_s=20.0, sp_new=550.0)
     return e
 
 
@@ -48,12 +63,12 @@ def build_predictor(env, model, calib_eps=3, delta=0.30):
     return pred, q
 
 
-def roll_pred(pred, vt0, pw0, u_const, K=3):
+def roll_pred(pred, vt0, pw0, u_const, K=8):
     vt, pw = float(vt0), float(pw0)
     seq = []
     for _ in range(K):
         vt = pred.predict_next(vt, pw, u_const)
-        pw += 0.3 * (u_const - pw)
+        pw += 0.8 * (u_const - pw)
         seq.append(vt)
     return np.asarray(seq)
 
@@ -90,19 +105,25 @@ def main():
 
         # inspect around / after jump
         if step_idx in [180, 195, 205, 220, 240]:
-            if vt < sp:
-                candidates = [u_rl, min(1.0, u_rl + 0.03), min(1.0, u_rl + 0.06), min(1.0, u_rl + 0.10)]
-            else:
-                candidates = [u_rl, max(0.0, u_rl - 0.03), max(0.0, u_rl - 0.06), max(0.0, u_rl - 0.10)]
+            offsets = [-0.08, -0.04, 0.0, 0.04, 0.08]
+            candidates = [float(np.clip(u_rl + off, 0.0, 1.0)) for off in offsets]
 
-            print(f"\nStep {step_idx}, t={step_idx*0.1:.1f}s, Vt={vt:.2f}, sp={sp:.2f}, PPO={u_rl:.3f}")
+            # remove duplicates
+            uniq = []
+            seen = set()
+            for u in candidates:
+                key = round(u, 6)
+                if key not in seen:
+                    seen.add(key)
+                    uniq.append(u)
+            candidates = uniq
 
             best_u = None
             best_rho = -1e9
 
             for u in candidates:
-                seq = roll_pred(pred, vt, pw, u, K=3)
-                rho = worst_case_band_violation(seq, q, sp, tol=0.02)
+                seq = roll_pred(pred, vt, pw, u, K=15)
+                rho = worst_case_band_violation(seq, q, sp, tol=0.015)
                 print(f"  candidate u={u:.3f} -> predicted robustness {rho:.4f}")
 
                 if rho > best_rho:

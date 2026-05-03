@@ -24,7 +24,12 @@ def worst_case_band_violation(pred_seq, q, sp, tol=0.05):
     pred_seq = np.asarray(pred_seq, float)
     err_up = np.abs((pred_seq + q - sp) / max(1e-6, sp))
     err_dn = np.abs((pred_seq - q - sp) / max(1e-6, sp))
-    margins = tol - np.minimum(err_up, err_dn)
+    #margins = tol - np.minimum(err_up, err_dn) Fixed issue 1
+    #margins = tol - np.minimum(err_up, err_dn)
+    margins = tol - np.maximum(err_up, err_dn)
+    
+
+    
     return float(np.min(margins))  # < 0 => predicted violation
 
 # --- the shield ---
@@ -39,6 +44,12 @@ class ConformalSTLShield:
         self.slew = float(slew)
         self.u_prev = 0.5
 
+        # ADDED for LOG
+        self.debug = False
+        self.debug_eps = 0.05
+
+
+
     def reset(self, u0=0.5): self.u_prev = float(u0)
 
     def _roll_pred(self, vt0, pw0, u_const):
@@ -47,26 +58,57 @@ class ConformalSTLShield:
         for _ in range(self.K):
             vt = self.p.predict_next(vt, pw, u_const)
             # crude pow update: towards u (engine lag captured implicitly in one-step fit)
-            pw += 0.3 * (u_const - pw)   # small lag factor; improves multi-step stability
+            pw += 0.5 * (u_const - pw)   # small lag factor; improves multi-step stability
+            
             seq.append(vt)
         return np.array(seq)
 
     def filter(self, vt, pw, sp, u_rl):
+        #return float(u_rl), 999.0
         # predictive check around constant action u_rl
         seq = self._roll_pred(vt, pw, u_rl)
         rho_worst = worst_case_band_violation(seq, self.q, sp, tol=self.tol)
-
-        if rho_worst >= -0.02:
+        '''
+        if rho_worst >= 0.0:  # it was -0.2
             u_tgt = u_rl
         else:
             # nudge toward setpoint if violation predicted
             bias = 0.15 if vt < sp else -0.15
             u_tgt = np.clip(u_rl + bias, 0.0, 1.0)
+        '''
+        cands = np.clip([u_rl-0.15, u_rl-0.08, u_rl, u_rl+0.08, u_rl+0.15], 0.0, 1.0)
+        best_u = u_rl
+        best_rho = -1e9
+
+        for u_c in cands:
+            seq = self._roll_pred(vt, pw, u_c)
+            rho = worst_case_band_violation(seq, self.q, sp, tol=self.tol)
+            if rho > best_rho:
+                best_rho = rho
+                best_u = u_c
+                
+        if rho_worst >= -0.005:
+            u_tgt = u_rl
+        elif best_rho > rho_worst + 0.002:
+            u_tgt = best_u
+        else:
+            u_tgt = u_rl
+        '''    
+        #u_tgt = best_u
+        if best_rho >= 0.005:
+            u_tgt = u_rl   # stay with RL if safe
+        else:
+            u_tgt = best_u 
+        '''
         # slew-limit
         u = np.clip(u_tgt, self.u_prev - self.slew, self.u_prev + self.slew)
         u = float(np.clip(u, 0.0, 1.0))
         self.u_prev = u
-        return u, rho_worst
+        # debug log (optional)
+        if self.debug and (best_rho < 0.01 or abs(u - u_rl) >= 0.05):
+            print(f"[CONF] vt={vt:.1f}, sp={sp:.1f}, u_rl={u_rl:.3f}, u={u:.3f}, rho={best_rho:.4f}")
+
+        return u, best_rho
 
 # --- calibration utility ---
 def collect_calibration(env, policy=None, episodes=10, random_throttle=False, seed=123):

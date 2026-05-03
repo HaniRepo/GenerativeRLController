@@ -1,0 +1,80 @@
+[
+  {
+    "table": "Speed Envelope \u2014 Strict Full Trace",
+    "start_frac": 0.0,
+    "method": "PPO",
+    "sat": 0.0,
+    "sat_percent": 0.0,
+    "rho": -0.06257150334397432,
+    "mean_du": 0.0038585071123900124,
+    "max_du": 0.8866394348442554,
+    "mean_u": 0.1853065501836439,
+    "changed": 0.0,
+    "bad": 0.0
+  },
+  {
+    "table": "Speed Envelope \u2014 Strict Full Trace",
+    "start_frac": 0.0,
+    "method": "PPO+CONF",
+    "sat": 1.0,
+    "sat_percent": 100.0,
+    "rho": 0.028162897476172326,
+    "mean_du": 0.0,
+    "max_du": 0.0,
+    "mean_u": 0.20600609183311464,
+    "changed": 0.0,
+    "bad": 0.0
+  },
+  {
+    "table": "Speed Envelope \u2014 Strict Full Trace",
+    "start_frac": 0.0,
+    "method": "PPO+GENAI",
+    "sat": 1.0,
+    "sat_percent": 100.0,
+    "rho": 0.023675858537597825,
+    "mean_du": 0.0,
+    "max_du": 0.0,
+    "mean_u": 0.2560060918331146,
+    "changed": 0.6,
+    "bad": 0.0
+  },
+  {
+    "table": "Speed Envelope \u2014 Post-Transient",
+    "start_frac": 0.35,
+    "method": "PPO",
+    "sat": 0.0,
+    "sat_percent": 0.0,
+    "rho": -0.06063882229847706,
+    "mean_du": 0.0038585071123900124,
+    "max_du": 0.8866394348442554,
+    "mean_u": 0.1853065501836439,
+    "changed": 0.0,
+    "bad": 0.0
+  },
+  {
+    "table": "Speed Envelope \u2014 Post-Transient",
+    "start_frac": 0.35,
+    "method": "PPO+CONF",
+    "sat": 1.0,
+    "sat_percent": 100.0,
+    "rho": 0.02422814245539079,
+    "mean_du": 0.0,
+    "max_du": 0.0,
+    "mean_u": 0.20600609183311464,
+    "changed": 0.0,
+    "bad": 0.0
+  },
+  {
+    "table": "Speed Envelope \u2014 Post-Transient",
+    "start_frac": 0.35,
+    "method": "PPO+GENAI",
+    "sat": 1.0,
+    "sat_percent": 100.0,
+    "rho": 0.024592917543693228,
+    "mean_du": 0.0,
+    "max_du": 0.0,
+    "mean_u": 0.23100609183311463,
+    "changed": 0.5,
+    "bad": 0.0
+  }
+]

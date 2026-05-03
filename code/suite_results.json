@@ -1,0 +1,242 @@
+[
+  {
+    "scenario": "Nominal (500)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO",
+    "sat": 1.0,
+    "rho": 0.04391719579543269
+  },
+  {
+    "scenario": "Nominal (500)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+STL",
+    "sat": 1.0,
+    "rho": 0.04391719579487097
+  },
+  {
+    "scenario": "Nominal (500)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+CONF",
+    "sat": 0.0,
+    "rho": -0.04051792531043247
+  },
+  {
+    "scenario": "Setpoint 450 (nominal)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO",
+    "sat": 1.0,
+    "rho": 0.046777623398034825
+  },
+  {
+    "scenario": "Setpoint 450 (nominal)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+STL",
+    "sat": 1.0,
+    "rho": 0.04677762342891798
+  },
+  {
+    "scenario": "Setpoint 450 (nominal)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+CONF",
+    "sat": 1.0,
+    "rho": 0.04677762345431284
+  },
+  {
+    "scenario": "Setpoint 550 (nominal)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO",
+    "sat": 1.0,
+    "rho": 0.04100801232280446
+  },
+  {
+    "scenario": "Setpoint 550 (nominal)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+STL",
+    "sat": 1.0,
+    "rho": 0.041008012334901776
+  },
+  {
+    "scenario": "Setpoint 550 (nominal)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+CONF",
+    "sat": 1.0,
+    "rho": 0.04100801230200494
+  },
+  {
+    "scenario": "Rate limit (slew=0.02)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO",
+    "sat": 1.0,
+    "rho": 0.04391719585084263
+  },
+  {
+    "scenario": "Rate limit (slew=0.02)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+STL",
+    "sat": 1.0,
+    "rho": 0.04391719585084263
+  },
+  {
+    "scenario": "Rate limit (slew=0.02)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+CONF",
+    "sat": 1.0,
+    "rho": 0.04391719585084263
+  },
+  {
+    "scenario": "Rate + noise (std=6)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO",
+    "sat": 1.0,
+    "rho": 0.04089148234747179
+  },
+  {
+    "scenario": "Rate + noise (std=6)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+STL",
+    "sat": 1.0,
+    "rho": 0.04218117684677299
+  },
+  {
+    "scenario": "Rate + noise (std=6)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+CONF",
+    "sat": 0.0,
+    "rho": -0.04148205934546058
+  },
+  {
+    "scenario": "Rate + noise + delay (2)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO",
+    "sat": 1.0,
+    "rho": 0.03949568877935426
+  },
+  {
+    "scenario": "Rate + noise + delay (2)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+STL",
+    "sat": 1.0,
+    "rho": 0.04237290112491271
+  },
+  {
+    "scenario": "Rate + noise + delay (2)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+CONF",
+    "sat": 0.0,
+    "rho": -0.04091071689159412
+  },
+  {
+    "scenario": "Rate + noise + delay + cap (0.85)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO",
+    "sat": 1.0,
+    "rho": 0.03980641793749223
+  },
+  {
+    "scenario": "Rate + noise + delay + cap (0.85)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+STL",
+    "sat": 1.0,
+    "rho": 0.04007598073427342
+  },
+  {
+    "scenario": "Rate + noise + delay + cap (0.85)",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+CONF",
+    "sat": 1.0,
+    "rho": 0.03905218495811937
+  },
+  {
+    "scenario": "… + Morelli model",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO",
+    "sat": 1.0,
+    "rho": 0.0395418648194931
+  },
+  {
+    "scenario": "… + Morelli model",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+STL",
+    "sat": 1.0,
+    "rho": 0.04258350787048672
+  },
+  {
+    "scenario": "… + Morelli model",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+CONF",
+    "sat": 1.0,
+    "rho": 0.04074774747529298
+  },
+  {
+    "scenario": "… + jump to 590 @20s",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO",
+    "sat": 1.0,
+    "rho": 0.03413260396168811
+  },
+  {
+    "scenario": "… + jump to 590 @20s",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+STL",
+    "sat": 1.0,
+    "rho": 0.0351179472643909
+  },
+  {
+    "scenario": "… + jump to 590 @20s",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "method": "PPO+CONF",
+    "sat": 1.0,
+    "rho": 0.03408476301949076
+  },
+  {
+    "scenario": "Full stress (cap+slew+noise+delay+Morelli+jump)",
+    "tol": 0.02,
+    "window_s": 5.0,
+    "method": "PPO",
+    "sat": 0.2,
+    "rho": -0.002956740473493205
+  },
+  {
+    "scenario": "Full stress (cap+slew+noise+delay+Morelli+jump)",
+    "tol": 0.02,
+    "window_s": 5.0,
+    "method": "PPO+STL",
+    "sat": 0.8,
+    "rho": -0.017388230613693687
+  },
+  {
+    "scenario": "Full stress (cap+slew+noise+delay+Morelli+jump)",
+    "tol": 0.02,
+    "window_s": 5.0,
+    "method": "PPO+CONF",
+    "sat": 1.0,
+    "rho": 0.0035957388106873114
+  }
+]

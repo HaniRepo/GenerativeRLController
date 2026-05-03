@@ -5,30 +5,64 @@
     "tol": 0.05,
     "window_s": 10.0,
     "sat": 1.0,
-    "rho": 0.04391719582151409
+    "rho": 0.04391719582151409,
+    "mean_du": 0.00044800729952590885,
+    "max_du": 0.03189006969332695,
+    "mean_u": 0.10751286321754257
+  },
+  {
+    "scenario": "Nominal",
+    "method": "PPO+CONF",
+    "tol": 0.05,
+    "window_s": 10.0,
+    "sat": 1.0,
+    "rho": 0.04354660805570161,
+    "mean_du": 0.0,
+    "max_du": 0.0,
+    "mean_u": 0.48200000000000004
   },
   {
     "scenario": "Nominal",
     "method": "PPO+GENAI",
     "tol": 0.05,
     "window_s": 10.0,
-    "sat": 1.0,
-    "rho": 0.042362527480904175
+    "sat": 0.2,
+    "rho": -0.6392666867975549,
+    "mean_du": 0.008080133555926544,
+    "max_du": 0.1,
+    "mean_u": 0.3025333333333334
   },
   {
-    "scenario": "JumpStress",
+    "scenario": "DecisionStress",
     "method": "PPO",
-    "tol": 0.02,
-    "window_s": 5.0,
+    "tol": 0.03,
+    "window_s": 8.0,
     "sat": 1.0,
-    "rho": 0.008054959362917051
+    "rho": 0.022320604448006737,
+    "mean_du": 0.054156858600887516,
+    "max_du": 0.8571076840162277,
+    "mean_u": 0.13095614801719785
   },
   {
-    "scenario": "JumpStress",
+    "scenario": "DecisionStress",
+    "method": "PPO+CONF",
+    "tol": 0.03,
+    "window_s": 8.0,
+    "sat": 0.4,
+    "rho": -0.00336970385448819,
+    "mean_du": 0.0,
+    "max_du": 0.0,
+    "mean_u": 0.48200000000000004
+  },
+  {
+    "scenario": "DecisionStress",
     "method": "PPO+GENAI",
-    "tol": 0.02,
-    "window_s": 5.0,
-    "sat": 0.0,
-    "rho": -0.14250116668240817
+    "tol": 0.03,
+    "window_s": 8.0,
+    "sat": 0.2,
+    "rho": -0.48329841666260825,
+    "mean_du": 0.009334587272745937,
+    "max_du": 0.12,
+    "mean_u": 0.3989200945537532
   }
 ]

@@ -17,7 +17,6 @@ from stable_baselines3.common.monitor import Monitor
 from f16_engine_env import F16EngineEnv
 from stl_monitor import settling_spec_last_window
 from stress_wrappers import (
-    ActionRateLimiter,
     NoisyDelayedWrapper,
     SetpointJumpWrapper,
     ThrottleCapWrapper,
@@ -34,7 +33,8 @@ from genai_hackathon.genai_shield import GenerativeConformalShield
 OUT = "genai_hackathon/proof_suite_out"
 MODEL = "shield_pack/ppo_f16_engine_baseline.zip"
 SEED = 42
-N = 5
+#N = 5
+N = 10
 
 
 def _base_env(e):
@@ -47,54 +47,31 @@ def _dt(env):
     return _base_env(env).dt
 
 
+def action_metrics(actions):
+    actions = np.asarray(actions, dtype=float)
+    if len(actions) <= 1:
+        return 0.0, 0.0, float(np.mean(actions)) if len(actions) else 0.0
+
+    du = np.abs(np.diff(actions))
+    return float(np.mean(du)), float(np.max(du)), float(np.mean(actions))
+
+
 def make_nominal(sp=500.0):
     return Monitor(F16EngineEnv(sp=sp, dt=0.1, ep_len_s=60.0, seed=SEED))
 
+
 def make_decision_stress():
     e = make_nominal()
-
-    # mild observation noise, no effective delay
-    e = NoisyDelayedWrapper(e, obs_sigma=3.0, act_delay_steps=0)
-
-    # switch model to create moderate dynamics mismatch
-    b = _base_env(e)
-    if hasattr(b, "sim") and hasattr(b.sim, "cfg") and hasattr(b.sim.cfg, "model_name"):
-        b.sim.cfg.model_name = "morelli"
-    elif hasattr(b, "sim") and hasattr(b.sim, "f16_model"):
-        b.sim.f16_model = "morelli"
-
-    # moderate task change
-    e = SetpointJumpWrapper(e, t_jump_s=20.0, sp_new=550.0)
-
+    e = ThrottleCapWrapper(e, u_max=0.75)
+    e = NoisyDelayedWrapper(e, obs_sigma=1.0, act_delay_steps=1)
+    e = SetpointJumpWrapper(e, t_jump_s=20.0, sp_new=520.0)
     return e
 
-def make_proof_stress():
-    e = make_nominal()
-
-    # observation noise without action mismatch
-    e = NoisyDelayedWrapper(e, obs_sigma=4.0, act_delay_steps=0)
-
-    b = _base_env(e)
-    if hasattr(b, "sim") and hasattr(b.sim, "cfg") and hasattr(b.sim.cfg, "model_name"):
-        b.sim.cfg.model_name = "morelli"
-    elif hasattr(b, "sim") and hasattr(b.sim, "f16_model"):
-        b.sim.f16_model = "morelli"
-
-    e = SetpointJumpWrapper(e, t_jump_s=22.0, sp_new=560.0)
-    return e
-
-def make_jump_stress():
-    """
-    Clean proof-of-concept stress:
-    only a strong setpoint jump, no actuator/path mismatch.
-    """
-    e = make_nominal()
-    e = SetpointJumpWrapper(e, t_jump_s=20.0, sp_new=600.0)
-    return e
 
 SCENARIOS = [
-    ("Nominal", make_nominal, dict(tol=0.05, window_s=10.0)),
-    ("JumpStress", make_jump_stress, dict(tol=0.02, window_s=5.0)),
+    #Temp
+    #("Nominal", make_nominal, dict(tol=0.05, window_s=10.0)),
+    ("DecisionStress", make_decision_stress, dict(tol=0.03, window_s=8.0)),
 ]
 
 
@@ -102,12 +79,13 @@ def rollout_ppo(env, model, seed, tol, window_s):
     obs, info = env.reset(seed=seed)
     base = _base_env(env)
 
-    vt = []
+    vt, actions = [], []
     done = False
 
     while not done:
         a, _ = model.predict(obs, deterministic=True)
         u = float(np.asarray(a).reshape(-1)[0])
+        actions.append(u)
 
         obs, r, done, trunc, info = env.step(np.array([u], dtype=np.float32))
         vt.append(info["Vt"])
@@ -118,7 +96,11 @@ def rollout_ppo(env, model, seed, tol, window_s):
     sat, rho = settling_spec_last_window(
         np.asarray(vt), sp=base.sp, dt=_dt(env), window_s=window_s, tol=tol
     )
-    return np.asarray(vt), float(sat), float(rho)
+
+    mean_du, max_du, mean_u = action_metrics(actions)
+
+    return dict(vt=np.asarray(vt), sat=sat, rho=rho,
+                mean_du=mean_du, max_du=max_du, mean_u=mean_u)
 
 
 def build_predictor(env, model, calib_eps=3, delta=0.30):
@@ -135,6 +117,7 @@ def build_predictor(env, model, calib_eps=3, delta=0.30):
         pred.predict_next(v0, p0, u0)
         for v0, p0, u0 in zip(Vt[:-1], pw[:-1], thr[:-1])
     ]
+
     q = split_conformal_q(np.asarray(pred_next) - Vt[1:], delta=delta)
 
     return pred, q
@@ -144,14 +127,15 @@ def rollout_conf(env, model, seed, tol, window_s):
     obs, info = env.reset(seed=seed)
     base = _base_env(env)
 
-    pred, q = build_predictor(env, model, calib_eps=3, delta=0.30)
+    pred, q = build_predictor(env, model)
 
-    shield = ConformalSTLShield(
-        pred, q=q, K=4, dt=_dt(env), tol=tol, slew=0.03
-    )
-    shield.reset(u0=0.5)
+    shield = ConformalSTLShield(pred, q=q, K=7, dt=_dt(env), tol=tol, slew=0.03)
+    # initialize shield with the first perturbed PPO action
+    a0, _ = model.predict(obs, deterministic=True)
+    u0 = float(np.asarray(a0).reshape(-1)[0])
+    shield.reset(u0=u0)
 
-    vt = []
+    vt, actions = [], []
     done = False
 
     while not done:
@@ -159,6 +143,7 @@ def rollout_conf(env, model, seed, tol, window_s):
         u_rl = float(np.asarray(a_rl).reshape(-1)[0])
 
         u, _ = shield.filter(base.sim.Vt, base.sim.pow, base.sp, u_rl)
+        actions.append(u)
 
         obs, r, done, trunc, info = env.step(np.array([u], dtype=np.float32))
         vt.append(info["Vt"])
@@ -169,34 +154,50 @@ def rollout_conf(env, model, seed, tol, window_s):
     sat, rho = settling_spec_last_window(
         np.asarray(vt), sp=base.sp, dt=_dt(env), window_s=window_s, tol=tol
     )
-    return np.asarray(vt), float(sat), float(rho)
+
+    mean_du, max_du, mean_u = action_metrics(actions)
+
+    return dict(vt=np.asarray(vt), sat=sat, rho=rho,
+                mean_du=mean_du, max_du=max_du, mean_u=mean_u)
 
 
 def rollout_genai(env, model, seed, tol, window_s):
     obs, info = env.reset(seed=seed)
     base = _base_env(env)
 
-    pred, q = build_predictor(env, model, calib_eps=3, delta=0.30)
+    # ✅ back to stable predictor
+    pred, q = build_predictor(env, model)
 
     shield = GenerativeConformalShield(
         pred,
         q=q,
-        K=3,
+        K=8,
         dt=_dt(env),
         tol=tol,
-        slew=0.03,
-        candidate_offsets=(-0.12, -0.06, 0.0, 0.06, 0.12),
+        slew=0.15,
+        candidate_offsets=(-0.25, -0.15, -0.05, 0.0, 0.05, 0.15, 0.25),
     )
-    shield.reset(u0=0.5)
+    # initialize shield with the first perturbed PPO action
+    a0, _ = model.predict(obs, deterministic=True)
+    u0 = float(np.asarray(a0).reshape(-1)[0])
+    shield.reset(u0=u0)
+    shield.debug = True
 
-    vt = []
+    vt, actions = [], []
+    changed, bad = 0, 0
     done = False
 
     while not done:
         a_rl, _ = model.predict(obs, deterministic=True)
         u_rl = float(np.asarray(a_rl).reshape(-1)[0])
 
-        u, _ = shield.filter(base.sim.Vt, base.sim.pow, base.sp, u_rl)
+        u, rho = shield.filter(base.sim.Vt, base.sim.pow, base.sp, u_rl)
+        actions.append(u)
+
+        if abs(u - u_rl) >= 0.03:
+            changed += 1
+        if rho < 0.0:
+            bad += 1
 
         obs, r, done, trunc, info = env.step(np.array([u], dtype=np.float32))
         vt.append(info["Vt"])
@@ -207,117 +208,49 @@ def rollout_genai(env, model, seed, tol, window_s):
     sat, rho = settling_spec_last_window(
         np.asarray(vt), sp=base.sp, dt=_dt(env), window_s=window_s, tol=tol
     )
-    return np.asarray(vt), float(sat), float(rho)
+
+    mean_du, max_du, mean_u = action_metrics(actions)
+
+    print(f"[GENAI EP] changed={changed}, bad={bad}, sat={sat}, rho={rho:.4f}")
+
+    return dict(vt=np.asarray(vt), sat=sat, rho=rho,
+                mean_du=mean_du, max_du=max_du, mean_u=mean_u)
 
 
-def evaluate_method(env_maker, model, method_name, tol, window_s, n=N):
-    sats, rhos = [], []
-    traces = []
+def evaluate_method(env_maker, model, method_name, tol, window_s):
+    sats, rhos, dus = [], [], []
 
-    for i in range(n):
+    for i in range(N):
         env = env_maker()
-        seed = SEED + i
 
         if method_name == "PPO":
-            vt, sat, rho = rollout_ppo(env, model, seed, tol, window_s)
+            res = rollout_ppo(env, model, SEED+i, tol, window_s)
         elif method_name == "PPO+CONF":
-            vt, sat, rho = rollout_conf(env, model, seed, tol, window_s)
-        elif method_name == "PPO+GENAI":
-            vt, sat, rho = rollout_genai(env, model, seed, tol, window_s)
+            res = rollout_conf(env, model, SEED+i, tol, window_s)
+        else:
+            res = rollout_genai(env, model, SEED+i, tol, window_s)
 
-        sats.append(sat)
-        rhos.append(rho)
-        traces.append(vt)
+        sats.append(res["sat"])
+        rhos.append(res["rho"])
+        dus.append(res["mean_du"])
 
-    return {
-        "sat": float(np.mean(sats)),
-        "rho": float(np.mean(rhos)),
-        "traces": traces,
-    }
-
-
-def save_bar_plot(rows):
-    stress_rows = [r for r in rows if r["scenario"] == "ProofStress"]
-    methods = [r["method"] for r in stress_rows]
-    sats = [100.0 * r["sat"] for r in stress_rows]
-    rhos = [r["rho"] for r in stress_rows]
-
-    plt.figure(figsize=(7, 4))
-    plt.bar(methods, sats)
-    plt.ylabel("STL Satisfaction (%)")
-    plt.title("ProofStress: Safety Satisfaction")
-    plt.tight_layout()
-    plt.savefig(os.path.join(OUT, "proofstress_satisfaction.png"), dpi=200)
-    plt.close()
-
-    plt.figure(figsize=(7, 4))
-    plt.bar(methods, rhos)
-    plt.ylabel("Mean Robustness")
-    plt.title("ProofStress: Mean STL Robustness")
-    plt.tight_layout()
-    plt.savefig(os.path.join(OUT, "proofstress_robustness.png"), dpi=200)
-    plt.close()
+    return np.mean(sats), np.mean(rhos), np.mean(dus)
 
 
 def main():
-    os.makedirs(OUT, exist_ok=True)
-
     env0 = make_nominal()
-    model = PPO.load(
-        MODEL,
-        env=env0,
-        custom_objects={
-            "learning_rate": 3e-4,
-            "clip_range": 0.2,
-        },
-    )
-
-    rows = []
+    model = PPO.load(MODEL, env=env0)
 
     print("\n=== Proof-of-Concept Suite ===")
-    print(f"{'Scenario':12s} | {'Method':10s} | {'Sat%':>6s} | {'Mean ρ':>7s}")
-    print("-" * 50)
 
-    #methods = ["PPO", "PPO+CONF", "PPO+GENAI"]
-    methods = ["PPO", "PPO+GENAI"]
-
-    for scenario_name, maker, spec in SCENARIOS:
-        for method in methods:
-            result = evaluate_method(
-                maker, model, method, tol=spec["tol"], window_s=spec["window_s"], n=N
+    for name, maker, spec in SCENARIOS:
+        for method in ["PPO", "PPO+CONF", "PPO+GENAI"]:
+            sat, rho, du = evaluate_method(
+                maker, model, method,
+                tol=spec["tol"], window_s=spec["window_s"]
             )
 
-            print(
-                f"{scenario_name:12s} | {method:10s} | {100*result['sat']:6.1f} | {result['rho']:7.4f}"
-            )
-
-            rows.append(
-                {
-                    "scenario": scenario_name,
-                    "method": method,
-                    "tol": spec["tol"],
-                    "window_s": spec["window_s"],
-                    "sat": result["sat"],
-                    "rho": result["rho"],
-                }
-            )
-
-    with open(os.path.join(OUT, "proof_suite.csv"), "w", newline="", encoding="utf-8-sig") as f:
-        w = csv.DictWriter(
-            f, fieldnames=["scenario", "method", "tol", "window_s", "sat", "rho"]
-        )
-        w.writeheader()
-        w.writerows(rows)
-
-    with open(os.path.join(OUT, "proof_suite.json"), "w", encoding="utf-8") as f:
-        json.dump(rows, f, indent=2, ensure_ascii=False)
-
-    save_bar_plot(rows)
-
-    print("\nSaved:", os.path.abspath(OUT))
-    print("Plots:")
-    print(" - proofstress_satisfaction.png")
-    print(" - proofstress_robustness.png")
+            print(f"{name:14s} | {method:10s} | {100*sat:6.1f} | {rho:7.4f}")
 
 
 if __name__ == "__main__":

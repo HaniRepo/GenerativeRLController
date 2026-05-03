@@ -1,7 +1,6 @@
 # genai_hackathon/run_genai_suite.py
 
 import os
-
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 import sys
 
@@ -99,8 +98,7 @@ def eval_genai(env, model, tol, window_s, n=N):
             dt=_dt(env),
             tol=tol,
             slew=0.03,
-            num_candidates=7,
-            sigma=0.05
+            candidate_offsets=(-0.14, -0.10, -0.06, -0.03, 0.0, 0.03, 0.06)
         )
 
         sh.reset(u0=0.5)

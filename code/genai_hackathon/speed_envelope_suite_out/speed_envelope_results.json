@@ -1,0 +1,35 @@
+[
+  {
+    "method": "PPO",
+    "tol_under": 0.05,
+    "tol_over": 0.03,
+    "sat": 0.0,
+    "sat_percent": 0.0,
+    "rho": -0.06257150334397432,
+    "mean_du": 0.0038585071123900124,
+    "max_du": 0.8866394348442554,
+    "mean_u": 0.1853065501836439
+  },
+  {
+    "method": "PPO+CONF",
+    "tol_under": 0.05,
+    "tol_over": 0.03,
+    "sat": 1.0,
+    "sat_percent": 100.0,
+    "rho": 0.027125485207464568,
+    "mean_du": 0.0,
+    "max_du": 0.0,
+    "mean_u": 0.20600609183311464
+  },
+  {
+    "method": "PPO+GENAI",
+    "tol_under": 0.05,
+    "tol_over": 0.03,
+    "sat": 1.0,
+    "sat_percent": 100.0,
+    "rho": 0.027156305954152672,
+    "mean_du": 0.0,
+    "max_du": 0.0,
+    "mean_u": 0.28100609183311465
+  }
+]

@@ -108,10 +108,12 @@ def eval_stl(env, model, tol, window_s, n=N):
 
     return float(np.mean(sats)), float(np.mean(rhos))
 
+#slew = 0.03 was too aggressive
 
-def eval_conf(env, model, tol, window_s, n=N, K=4, delta=0.30, slew=0.03, calib_eps=3):
+def eval_conf (env, model, tol, window_s, n=N, K=4, delta=0.30, slew=0.08, calib_eps=3 ):
     sats = []
     rhos = []
+    
 
     base0 = _base_env(env)
 
@@ -129,11 +131,15 @@ def eval_conf(env, model, tol, window_s, n=N, K=4, delta=0.30, slew=0.03, calib_
     q = split_conformal_q(np.asarray(pred_next) - Vt[1:], delta=delta)
 
     for i in range(n):
+        n_changed = 0
+        n_risky = 0
         obs, info = env.reset(seed=SEED + i)
         base = _base_env(env)
 
         sh = ConformalSTLShield(pred, q=q, K=K, dt=_dt(env), tol=tol, slew=slew)
-        sh.reset(u0=0.5)
+        a0, _ = model.predict(obs, deterministic=True)
+        u0 = float(np.asarray(a0).reshape(-1)[0])
+        sh.reset(u0=u0)
 
         vt = []
         done = False
@@ -142,20 +148,24 @@ def eval_conf(env, model, tol, window_s, n=N, K=4, delta=0.30, slew=0.03, calib_
             a_rl, _ = model.predict(obs, deterministic=True)
             u_rl = float(np.asarray(a_rl).reshape(-1)[0])
 
-            u, _ = sh.filter(base.sim.Vt, base.sim.pow, base.sp, u_rl)
+            u, rho = sh.filter(base.sim.Vt, base.sim.pow, base.sp, u_rl)
+            if abs(u - u_rl) >= 0.05:
+                n_changed += 1
+            if rho < 0.01:
+                n_risky += 1
 
             obs, r, done, trunc, info = env.step(np.array([u], dtype=np.float32))
             vt.append(info["Vt"])
 
             if trunc:
                 break
-
+        print(f"[CONF EP] changed={n_changed}, risky={n_risky}")        
         sat, rho = settling_spec_last_window(
             np.asarray(vt), sp=base.sp, dt=_dt(env), window_s=window_s, tol=tol
         )
         sats.append(float(sat))
         rhos.append(float(rho))
-
+    
     return float(np.mean(sats)), float(np.mean(rhos))
 
 

@@ -6,9 +6,9 @@
     "K": 1,
     "spread": 0.06,
     "sat": 1.0,
-    "rho": 0.034520215223612795,
-    "change_rate": 0.8663333333333334,
-    "avg_predicted_gain": 2.2898237309664913e-05
+    "rho": 0.032177215725178884,
+    "change_rate": 0.0013333333333333335,
+    "avg_predicted_gain": 1.2261245257901472e-09
   },
   {
     "config": "dir_c5_k3",
@@ -17,9 +17,9 @@
     "K": 3,
     "spread": 0.06,
     "sat": 1.0,
-    "rho": 0.034520215211707506,
-    "change_rate": 0.865,
-    "avg_predicted_gain": 6.815813965568992e-05
+    "rho": 0.034520215205594715,
+    "change_rate": 0.7943333333333333,
+    "avg_predicted_gain": 9.025237252228632e-07
   },
   {
     "config": "dir_c7_k3",
@@ -28,9 +28,9 @@
     "K": 3,
     "spread": 0.08,
     "sat": 1.0,
-    "rho": 0.0353012160118798,
-    "change_rate": 0.865,
-    "avg_predicted_gain": 9.087331999003812e-05
+    "rho": 0.03530121602327456,
+    "change_rate": 0.7943333333333333,
+    "avg_predicted_gain": 1.2033468099484252e-06
   },
   {
     "config": "sym_c5_k3",
@@ -39,8 +39,8 @@
     "K": 3,
     "spread": 0.06,
     "sat": 1.0,
-    "rho": 0.034520215200735484,
-    "change_rate": 0.868,
-    "avg_predicted_gain": 6.842020320915553e-05
+    "rho": 0.03452021503105166,
+    "change_rate": 0.983,
+    "avg_predicted_gain": 1.0519280775741305e-06
   }
 ]

@@ -1,3 +1,5 @@
+#eval_seeds.py
+
 import json, numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.monitor import Monitor
@@ -94,7 +96,8 @@ def main():
             for _ in range(N_EVAL):
                 obs, info = env.reset()
                 base2 = _base_env(env)
-                sh = ConformalSTLShield(pred, q=q, K=6, dt=dt, tol=0.05, slew=0.03)
+                #sh = ConformalSTLShield(pred, q=q, K=6, dt=dt, tol=0.05, slew=0.03)
+                sh = ConformalSTLShield(pred, q=q, K=6, dt=dt, tol=0.02, slew=0.03)
                 sh.reset(u0=0.5)
                 vt_hist=[]; done=False
                 while not done:

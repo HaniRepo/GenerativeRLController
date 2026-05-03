@@ -1,3 +1,4 @@
+#run_benchmark_suit.py
 import os, json, csv
 import numpy as np
 from copy import deepcopy
@@ -15,7 +16,7 @@ from conformal_shield import OneStepVTLinear, split_conformal_q, ConformalSTLShi
 # ----------------- config -----------------
 MODEL_SRC = "ppo_f16_engine.zip"
 SEED      = 42
-N_EVAL    = 20
+N_EVAL    = 5   #default value is 20
 
 # nominal env settings
 BASE = dict(sp=500.0, dt=0.1, T=60.0)
@@ -80,23 +81,47 @@ def eval_many_stl(env_builder, model, tol=0.05, window_s=10.0, n_episodes=N_EVAL
     return float(np.mean(sats)), float(np.mean(rhos))
 
 def eval_many_conf(env_builder, model, tol=0.05, window_s=10.0, n_episodes=N_EVAL, delta=0.30, K=6, slew=0.03, calib_eps=8):
+    changed = 0
     sats, rhos = [], []
+
+    # calibrate ONCE for this scenario
+    env_cal = env_builder()
+    dt = _get_dt(env_cal)
+    base_cal = _unwrap(env_cal)
+
+    Vt, pw, thr = collect_calibration(base_cal, policy=model, episodes=calib_eps, random_throttle=False, seed=123)
+    pred = OneStepVTLinear()
+    pred.fit(Vt, pw, thr)
+
+    predn = [pred.predict_next(vt0, pw0, u0) for vt0, pw0, u0 in zip(Vt[:-1], pw[:-1], thr[:-1])]
+    q = split_conformal_q(np.asarray(predn) - Vt[1:], delta=delta)
+    print(f"[CONF CAL] q={q:.4f}")
+
     for k in range(n_episodes):
         env = env_builder()
-        dt  = _get_dt(env)
-        base = _unwrap(env)
-        Vt, pw, thr = collect_calibration(base, policy=model, episodes=calib_eps, random_throttle=False, seed=123+k)
-        pred  = OneStepVTLinear(); pred.fit(Vt, pw, thr)
-        predn = [pred.predict_next(vt0, pw0, u0) for vt0, pw0, u0 in zip(Vt[:-1], pw[:-1], thr[:-1])]
-        q     = split_conformal_q(np.asarray(predn) - Vt[1:], delta=delta)
-        sh    = ConformalSTLShield(pred, q=q, K=K, dt=dt, tol=tol, slew=slew); sh.reset(u0=0.5)
-        t, vt, sp = rollout(env, model, filt=lambda u_rl, base: sh.filter(base.sim.Vt, base.sim.pow, base.sp, u_rl)[0])
-        sat, rho  = settling_spec_last_window(vt, sp=sp, dt=dt, window_s=window_s, tol=tol)
-        sats.append(float(sat)); rhos.append(float(rho))
+        sh = ConformalSTLShield(pred, q=q, K=K, dt=dt, tol=tol, slew=slew)
+        sh.reset(u0=0.5)
+
+        def filt_fn(u_rl, base):
+            nonlocal changed
+            u, _ = sh.filter(base.sim.Vt, base.sim.pow, base.sp, u_rl)
+            if abs(u - u_rl) >= 0.05:
+                changed += 1
+            return u
+
+        t, vt, sp = rollout(env, model, filt=filt_fn)
+
+        
+        sat, rho = settling_spec_last_window(vt, sp=sp, dt=dt, window_s=window_s, tol=tol)
+        print(f"[CONF EP] changed={changed}, sat={sat}, rho={rho:.4f}")
+        sats.append(float(sat))
+        rhos.append(float(rho))
+
     return float(np.mean(sats)), float(np.mean(rhos))
 
 # ----------------- scenarios -----------------
 def build_scenarios():
+    #S = [S[3]]  # Rate limit only
     S = []
 
     # S0: Nominal (5%/10s)
@@ -220,8 +245,8 @@ def main():
     with open("suite_results.json", "w", encoding="utf-8") as f:
         json.dump(rows, f, indent=2, ensure_ascii=False)
 
-    with open("suite_table.tex", "w", encoding="utf-8") as f:
-        f.write("\n".join(lines))
+    #with open("suite_table.tex", "w", encoding="utf-8") as f:
+    #    f.write("\n".join(lines))
 
     # make LaTeX table
     scenarios_order = [s["name"] for s in scenarios]

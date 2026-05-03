@@ -1,0 +1,20 @@
+\begin{table}[t]\centering
+\caption{Progressive stress suite: STL satisfaction (\%) and mean robustness $\rho$.}
+\label{tab:suite}
+\begin{tabular}{lccc}
+\toprule
+Scenario & PPO & PPO+STL & PPO+CONF\\
+\midrule
+Nominal (500) & 100\,(\,\,0.044\,) & 100\,(\,\,0.044\,) & 0\,(\,\,-0.041\,)\\
+Setpoint 450 (nominal) & 100\,(\,\,0.047\,) & 100\,(\,\,0.047\,) & 100\,(\,\,0.047\,)\\
+Setpoint 550 (nominal) & 100\,(\,\,0.041\,) & 100\,(\,\,0.041\,) & 100\,(\,\,0.041\,)\\
+Rate limit (slew=0.02) & 100\,(\,\,0.044\,) & 100\,(\,\,0.044\,) & 100\,(\,\,0.044\,)\\
+Rate + noise (std=6) & 100\,(\,\,0.041\,) & 100\,(\,\,0.042\,) & 0\,(\,\,-0.041\,)\\
+Rate + noise + delay (2) & 100\,(\,\,0.039\,) & 100\,(\,\,0.042\,) & 0\,(\,\,-0.041\,)\\
+Rate + noise + delay + cap (0.85) & 100\,(\,\,0.040\,) & 100\,(\,\,0.040\,) & 100\,(\,\,0.039\,)\\
+… + Morelli model & 100\,(\,\,0.040\,) & 100\,(\,\,0.043\,) & 100\,(\,\,0.041\,)\\
+… + jump to 590 @20s & 100\,(\,\,0.034\,) & 100\,(\,\,0.035\,) & 100\,(\,\,0.034\,)\\
+Full stress (cap+slew+noise+delay+Morelli+jump) & 20\,(\,\,-0.003\,) & 80\,(\,\,-0.017\,) & 100\,(\,\,0.004\,)\\
+\bottomrule
+\end{tabular}
+\end{table}
